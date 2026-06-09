@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم حرب كلاش - Clan War Control Room</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Auth Screen (overlay) -->
+  <div id="auth-screen" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="crown-icon"><i class="fa-solid fa-crown"></i></div>
+        <h2>لوحة التحكم الملكية</h2>
+        <p>ادخل كلمة المرور الخاصة بالمشرفين للمتابعة</p>
+      </div>
+      <form id="auth-form" class="auth-form">
+        <div class="input-group">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input type="password" id="admin-password" placeholder="كلمة المرور" required>
+        </div>
+        <button type="submit" class="btn btn-gold btn-block">
+          <span>دخول القلعة</span> <i class="fa-solid fa-key"></i>
+        </button>
+        <p id="auth-error" class="error-msg hide"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Dashboard (hidden by default) -->
+  <div id="main-dashboard" class="dashboard-container hide">
+    
+    <!-- Top Header -->
+    <header class="main-header">
+      <div class="header-brand">
+        <div class="logo-badge"><i class="fa-solid fa-shield-halved"></i></div>
+        <div>
+          <h1>غرفة إدارة الحرب 👑</h1>
+          <p class="clan-name-display">جاري التحميل...</p>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <div class="status-indicator">
+          <span class="status-dot green"></span>
+          <span>البوت متصل</span>
+        </div>
+        <button id="logout-btn" class="btn btn-dark">
+          <i class="fa-solid fa-right-from-bracket"></i> خروج
+        </button>
+      </div>
+    </header>
+
+    <!-- Dashboard Content Grid -->
+    <main class="dashboard-content">
+      
+      <!-- Left Column: Live Stats & Control -->
+      <section class="dashboard-sidebar">
+        
+        <!-- Clan Profile Widget -->
+        <div class="dashboard-card clan-card">
+          <div class="card-header-royal">
+            <h3>🛡️ الملف الشخصي للكلان</h3>
+          </div>
+          <div class="clan-info-body">
+            <div class="clan-badge-placeholder">
+              <i class="fa-solid fa-shield-halved badge-icon-large"></i>
+            </div>
+            <h2 id="clan-name">---</h2>
+            <p id="clan-tag" class="tag-display">#---</p>
+            
+            <div class="clan-stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">المستوى</span>
+                <span id="clan-level" class="stat-value">--</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">الأعضاء</span>
+                <span id="clan-members" class="stat-value">--</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">كؤوس الكلان</span>
+                <span id="clan-trophies" class="stat-value">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- War Summary Widget -->
+        <div class="dashboard-card war-card">
+          <div class="card-header-royal">
+            <h3>⚔️ حالة الحرب الحالية</h3>
+          </div>
+          <div class="war-info-body" id="war-info-container">
+            <!-- Dynamic War Info goes here -->
+            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>
+          </div>
+        </div>
+
+        <!-- System Controls Widget -->
+        <div class="dashboard-card control-card">
+          <div class="card-header-royal">
+            <h3>⚙️ إجراءات سريعة</h3>
+          </div>
+          <div class="control-body">
+            <button id="btn-manual-alert" class="btn btn-gold btn-block btn-pulse">
+              <i class="fa-solid fa-bell"></i> إرسال تنبيه يدوي الآن
+            </button>
+            <p class="control-note">سيقوم هذا الخيار بفحص هجمات الحرب فوراً وإرسال تنبيه في التلجرام للأعضاء المتأخرين.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Player Mappings & Configuration -->
+      <section class="dashboard-main">
+        
+        <!-- Tabs Nav -->
+        <div class="tabs-nav">
+          <button class="tab-btn active" data-tab="players-tab">
+            <i class="fa-solid fa-users"></i> ربط اللاعبين والمتابعة
+          </button>
+          <button class="tab-btn" data-tab="settings-tab">
+            <i class="fa-solid fa-sliders"></i> إعدادات البوت والـ API
+          </button>
+        </div>
+
+        <!-- Tab 1: Players & War Attacks -->
+        <div class="tab-content active" id="players-tab">
+          <div class="dashboard-card">
+            <div class="table-controls">
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="player-search" placeholder="ابحث باسم اللاعب أو الـ Tag...">
+              </div>
+              <div class="filter-box">
+                <select id="player-filter">
+                  <option value="all">جميع اللاعبين</option>
+                  <option value="unregistered">غير المسجلين بالبوت</option>
+                  <option value="missing-attacks">لديهم هجمات متبقية</option>
+                  <option value="registered">المسجلين فقط</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="royal-table">
+                <thead>
+                  <tr>
+                    <th>موقع الخريطة</th>
+                    <th>اللاعب</th>
+                    <th>مستوى اللاعب (King Level)</th>
+                    <th>حالة الهجمات (Decks)</th>
+                    <th>حساب التلجرام</th>
+                    <th>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="players-table-body">
+                  <tr>
+                    <td colspan="6" class="text-center">
+                      <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري جلب قائمة اللاعبين...</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Settings -->
+        <div class="tab-content" id="settings-tab">
+          <div class="dashboard-card">
+            <form id="settings-form" class="royal-form">
+              
+              <div class="form-section-title">🛡️ إعدادات لعبة كلاش</div>
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="setting-clan-tag">تاغ الكلان (Clan Tag)</label>
+                  <input type="text" id="setting-clan-tag" placeholder="مثال: #2Q0R2G0J" required>
+                  <span class="input-help">تاغ الكلان الخاص بك باللعبة مع علامة #</span>
+                </div>
+                
+                <div class="form-group">
+                  <label for="setting-coc-api-key">رمز API لكلاش رويال (Clash Royale API Key)</label>
+                  <input type="password" id="setting-coc-api-key" placeholder="أدخل رمز الـ API" required>
+                  <span class="input-help">من موقع المطورين developer.clashroyale.com</span>
+                </div>
+              </div>
+
+              <div class="form-section-title">💬 إعدادات التلجرام والاشعارات</div>
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="setting-telegram-token">توكن بوت التلجرام (Telegram Bot Token)</label>
+                  <input type="password" id="setting-telegram-token" placeholder="أدخل توكن البوت" required>
+                  <span class="input-help">من الـ BotFather الخاص بالتلجرام</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-group-chat-id">معرف مجموعة التلجرام (Group Chat ID)</label>
+                  <input type="text" id="setting-group-chat-id" placeholder="مثال: -100123456789">
+                  <span class="input-help">معرف المجموعة التي سيقوم البوت بإرسال تنبيهات الحرب فيها (يتم حفظها تلقائياً عند إضافة البوت للمجموعة وإرسال /start)</span>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="setting-warning-hours">ساعات التنبيه قبل نهاية الحرب (Warning Hours)</label>
+                  <input type="text" id="setting-warning-hours" placeholder="مثال: 12, 6, 2, 1" required>
+                  <span class="input-help">ساعات تفصل بينها فاصلة (مثال: 12,6,2,1) ليقوم البوت بإرسال التنبيهات عندها</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-dashboard-password">كلمة مرور لوحة التحكم الجديدة</label>
+                  <input type="password" id="setting-dashboard-password" placeholder="اتركها فارغة لعدم التغيير">
+                  <span class="input-help">كلمة المرور المستخدمة لدخول هذه اللوحة</span>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-gold">
+                  <i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات
+                </button>
+                <span id="settings-save-status" class="save-status"></span>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Bottom Footer -->
+    <footer class="main-footer">
+      <p>صُمم بطابع كلاش رويال الملكي 👑 | جميع الحقوق محفوظة لـ كلاش أوف كلانز API</p>
+    </footer>
+
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast hide">
+    <span id="toast-message"></span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
