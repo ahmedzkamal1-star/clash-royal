@@ -195,6 +195,14 @@ body {
   padding-bottom: 15px;
 }
 
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+  animation: fadeIn 0.4s ease;
+}
+
 /* Table & Controls */
 .table-controls {
   padding: 20px;
