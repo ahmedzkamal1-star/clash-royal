@@ -201,8 +201,9 @@ export async function getUnifiedActiveWar() {
       allClans = race.clans.map(c => ({
         tag: c.tag,
         name: c.name,
-        fame: c.periodPoints || c.fame || 0 // Use periodPoints for medals
-      })).sort((a, b) => b.fame - a.fame);
+        fame: c.fame || 0, // Today's fame (distance moved today)
+        periodPoints: c.periodPoints || c.fame || 0 // Total medals for the week
+      }));
     }
 
     return {

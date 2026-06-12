@@ -53,8 +53,9 @@ export function getRelativeTimeStr(endTimeStr) {
 // Generate the standard keyboard
 function getMainMenu() {
   return Markup.keyboard([
-    ['⚔️ سباق الحرب (River Race)', '👤 حسابي'],
-    ['🛡️ معلومات الكلان', '📝 ربط الحساب']
+    ['🛡️ معلومات الكلان', '👤 حسابي'],
+    ['⚔️ نقاط الحرب (اليوم)', '⚔️ نقاط الحرب (الأسبوع)'],
+    ['⚙️ الإعدادات']
   ]).resize();
 }
 
@@ -213,9 +214,14 @@ export async function initBot() {
         await handleClanInfo(ctx);
         break;
 
+      case '⚔️ نقاط الحرب (اليوم)':
+        await handleWarInfo(ctx, 'today');
+        break;
+
+      case '⚔️ نقاط الحرب (الأسبوع)':
       case '⚔️ سباق الحرب (River Race)':
       case '⚔️ حالة الحرب':
-        await handleWarInfo(ctx);
+        await handleWarInfo(ctx, 'total');
         break;
 
       case '👤 حسابي':
@@ -271,7 +277,7 @@ async function handleClanInfo(ctx) {
   }
 }
 
-async function handleWarInfo(ctx) {
+async function handleWarInfo(ctx, mode = 'total') {
   const telegramId = ctx.from.id;
   const player = await getPlayerByTelegramId(telegramId);
   if (!player) {
@@ -298,14 +304,24 @@ async function handleWarInfo(ctx) {
       stateStr = `يوم حرب (اليوم ${dayNum})`;
     }
     
-    let text = `⚔️ حالة الحرب: **${stateStr}**\n\n`;
+    const modeTitle = mode === 'today' ? 'إنجاز اليوم' : 'الإجمالي الأسبوعي';
+    let text = `⚔️ حالة الحرب: **${stateStr}**\n📊 الترتيب حسب: **${modeTitle}**\n\n`;
 
     const rankPrefixes = ['🥇 الأول', '🥈 الثاني', '🥉 الثالث', '🏅 الرابع', '🎖️ الخامس'];
     if (war.clans && war.clans.length > 0) {
-      war.clans.forEach((c, i) => {
+      // Sort clans based on requested mode
+      let sortedClans = [...war.clans];
+      if (mode === 'today') {
+        sortedClans.sort((a, b) => b.fame - a.fame);
+      } else {
+        sortedClans.sort((a, b) => b.periodPoints - a.periodPoints);
+      }
+
+      sortedClans.forEach((c, i) => {
         const isUs = c.tag === war.clan.tag ? ' (نحن 🛡️)' : '';
         const prefix = rankPrefixes[i] || `${i + 1}-`;
-        text += `${prefix} كلان **${c.name}**${isUs}\n└ نقاط القبيلة: ${c.fame} 🏆\n`;
+        const score = mode === 'today' ? c.fame : c.periodPoints;
+        text += `${prefix} كلان **${c.name}**${isUs}\n└ ${mode === 'today' ? 'شهرة اليوم' : 'النقاط الإجمالية'}: ${score} 🏆\n`;
       });
     }
 
