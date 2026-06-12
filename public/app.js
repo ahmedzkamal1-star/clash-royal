@@ -136,6 +136,8 @@ async function loadDashboardData() {
   loadWarInfo();
   loadPlayersList();
   loadSettings();
+  loadStrikesList();
+  loadLeaderboard();
 }
 
 // Fetch Clan profile info
