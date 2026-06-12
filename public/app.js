@@ -588,3 +588,100 @@ tabBtns.forEach(btn => {
     document.getElementById(tabId).classList.add('active');
   });
 });
+
+// Load Leaderboard
+async function loadLeaderboard() {
+  try {
+    const clanRes = await fetch('/api/clan', { headers: { 'Authorization': apiToken } });
+    const warRes = await fetch('/api/war', { headers: { 'Authorization': apiToken } });
+    
+    if (clanRes.ok && warRes.ok) {
+      const clan = await clanRes.json();
+      const war = await warRes.json();
+
+      let topDonators = [...(clan.memberList || [])].sort((a, b) => b.donations - a.donations).slice(0, 3);
+      let topAttackers = [];
+      if (war && war.clan && war.clan.members) {
+        topAttackers = [...war.clan.members].sort((a, b) => b.fame - a.fame).slice(0, 3);
+      }
+
+      const rankIcons = ['🥇', '🥈', '🥉'];
+      
+      const warHtml = topAttackers.length > 0 ? topAttackers.map((m, i) => `
+        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 1.2rem; font-weight: bold;">${rankIcons[i]} ${m.name}</span>
+          <span class="badge badge-gold">${m.fame} 🏆</span>
+        </div>
+      `).join('') : '<div class="text-center">لا توجد بيانات حرب حالياً.</div>';
+      
+      const donatorsHtml = topDonators.length > 0 ? topDonators.map((m, i) => `
+        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 1.2rem; font-weight: bold;">${rankIcons[i]} ${m.name}</span>
+          <span class="badge badge-primary">${m.donations} بطاقة</span>
+        </div>
+      `).join('') : '<div class="text-center">لا توجد بيانات دعم حالياً.</div>';
+
+      document.getElementById('leaderboard-war').innerHTML = warHtml;
+      document.getElementById('leaderboard-donations').innerHTML = donatorsHtml;
+    }
+  } catch (err) {
+    document.getElementById('leaderboard-war').innerHTML = '<div class="text-danger text-center">خطأ في جلب البيانات</div>';
+    document.getElementById('leaderboard-donations').innerHTML = '<div class="text-danger text-center">خطأ في جلب البيانات</div>';
+  }
+}
+
+// Load Strikes
+async function loadStrikesList() {
+  try {
+    const res = await fetch('/api/strikes', { headers: { 'Authorization': apiToken } });
+    if (!res.ok) throw new Error();
+    const strikes = await res.json();
+    
+    const tbody = document.getElementById('strikes-table-body');
+    tbody.innerHTML = '';
+    
+    const strikeEntries = Object.entries(strikes);
+    
+    if (strikeEntries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:var(--color-success);">لا يوجد أي إنذارات مسجلة. الكلان في أمان! 🎉</td></tr>';
+      return;
+    }
+
+    strikeEntries.sort((a, b) => b[1].count - a[1].count).forEach(([tag, data]) => {
+      const tr = document.createElement('tr');
+      const date = new Date(data.last_updated).toLocaleString('ar-EG');
+      const badgeClass = data.count >= 3 ? 'badge-danger' : 'badge-warning';
+      
+      tr.innerHTML = `
+        <td style="font-weight: bold;">${data.name}</td>
+        <td class="tag-cell">${tag}</td>
+        <td><span class="badge ${badgeClass}">${data.count}</span></td>
+        <td style="font-size: 0.85rem; color: #888;">${date}</td>
+        <td>
+          <button class="btn btn-sm btn-dark" onclick="resetStrike('${tag}')" title="تصفير إنذارات هذا اللاعب"><i class="fa-solid fa-eraser"></i> تصفير</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    document.getElementById('strikes-table-body').innerHTML = '<tr><td colspan="5" class="text-danger text-center">خطأ في جلب بيانات الإنذارات</td></tr>';
+  }
+}
+
+window.resetStrike = async function(tag) {
+  if (!confirm('هل أنت متأكد من تصفير الإنذارات لهذا اللاعب؟')) return;
+  try {
+    const res = await fetch('/api/strikes/' + encodeURIComponent(tag), {
+      method: 'DELETE',
+      headers: { 'Authorization': apiToken }
+    });
+    if (res.ok) {
+      showToast('تم تصفير إنذار اللاعب بنجاح');
+      loadStrikesList();
+    } else {
+      showToast('خطأ أثناء التصفير', true);
+    }
+  } catch (err) {
+    showToast('خطأ في الاتصال بالخادم', true);
+  }
+};

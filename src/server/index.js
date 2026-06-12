@@ -255,4 +255,34 @@ export function setupApiRoutes(app) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // ---- Strikes Management ----
+  app.get('/api/strikes', checkAuth, async (req, res) => {
+    try {
+      const strikes = await getAllStrikes();
+      res.json(strikes);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete('/api/strikes/:tag', checkAuth, async (req, res) => {
+    try {
+      let tag = req.params.tag;
+      if (!tag.startsWith('#')) tag = '#' + tag;
+      await resetStrikeForPlayer(tag);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/strikes/reset-all', checkAuth, async (req, res) => {
+    try {
+      await resetAllStrikes();
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 }

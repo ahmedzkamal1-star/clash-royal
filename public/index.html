@@ -136,6 +136,12 @@
           <button class="tab-btn active" data-tab="players-tab">
             <i class="fa-solid fa-users"></i> ربط اللاعبين والمتابعة
           </button>
+          <button class="tab-btn" data-tab="leaderboard-tab">
+            <i class="fa-solid fa-trophy"></i> أبطال الكلان
+          </button>
+          <button class="tab-btn" data-tab="strikes-tab">
+            <i class="fa-solid fa-gavel"></i> سجل الإنذارات
+          </button>
           <button class="tab-btn" data-tab="settings-tab">
             <i class="fa-solid fa-sliders"></i> إعدادات البوت والـ API
           </button>
@@ -179,6 +185,57 @@
                     <td colspan="6" class="text-center">
                       <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري جلب قائمة اللاعبين...</div>
                     </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Leaderboard -->
+        <div class="tab-content" id="leaderboard-tab">
+          <div class="dashboard-card" style="background: linear-gradient(135deg, #1e1e2d 0%, #151521 100%); border: 1px solid #ffd70033;">
+            <div class="form-section-title" style="text-align: center; color: #ffd700;"><i class="fa-solid fa-crown"></i> لوحة الشرف لأبطال الكلان <i class="fa-solid fa-crown"></i></div>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+              
+              <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; border-top: 3px solid #ffaa00;">
+                <h3 style="color: #ffaa00; text-align: center; margin-bottom: 20px;"><i class="fa-solid fa-khanda"></i> أبطال الحرب (أعلى شهرة)</h3>
+                <div id="leaderboard-war" style="display: flex; flex-direction: column; gap: 15px;">
+                  <div class="text-center">جاري التحميل...</div>
+                </div>
+              </div>
+
+              <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; border-top: 3px solid #00ffcc;">
+                <h3 style="color: #00ffcc; text-align: center; margin-bottom: 20px;"><i class="fa-solid fa-hand-holding-heart"></i> أهل الكرم (أعلى دعم)</h3>
+                <div id="leaderboard-donations" style="display: flex; flex-direction: column; gap: 15px;">
+                  <div class="text-center">جاري التحميل...</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Strikes -->
+        <div class="tab-content" id="strikes-tab">
+          <div class="dashboard-card">
+            <div class="form-section-title" style="color: #ff4444;"><i class="fa-solid fa-gavel"></i> سجل الغياب والإنذارات</div>
+            <p style="margin-bottom: 20px; color: #a0a0b0;">يتم تسجيل إنذار تلقائياً لكل عضو لم يكمل هجماته (4/4) مع نهاية يوم الحرب. يمكنك تصفير الإنذارات بعد طرد العضو أو إذا كان لديه عذر.</p>
+            
+            <div class="table-responsive">
+              <table class="royal-table">
+                <thead>
+                  <tr>
+                    <th>اللاعب</th>
+                    <th>الـ Tag</th>
+                    <th>عدد الإنذارات 🚨</th>
+                    <th>آخر إنذار</th>
+                    <th>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="strikes-table-body">
+                  <tr>
+                    <td colspan="5" class="text-center">جاري تحميل سجل الإنذارات...</td>
                   </tr>
                 </tbody>
               </table>

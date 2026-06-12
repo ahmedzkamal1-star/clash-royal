@@ -134,6 +134,58 @@ export async function getPlayerByTag(playerTag) {
   return data || null;
 }
 
+export async function getPlayerByPlayerTag(tag) {
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .eq('player_tag', tag)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching player by tag:', error.message);
+  }
+  return data || null;
+}
+
+// ----- STRIKES MANAGEMENT -----
+export async function getAllStrikes() {
+  const data = await getSetting('member_strikes');
+  if (!data) return {};
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return {};
+  }
+}
+
+export async function updateStrikesData(strikesObj) {
+  await updateSetting('member_strikes', JSON.stringify(strikesObj));
+}
+
+export async function addStrikeToPlayer(tag, name) {
+  const strikes = await getAllStrikes();
+  if (!strikes[tag]) {
+    strikes[tag] = { name: name, count: 0, last_updated: new Date().toISOString() };
+  }
+  strikes[tag].count += 1;
+  strikes[tag].name = name; // Update name just in case
+  strikes[tag].last_updated = new Date().toISOString();
+  await updateStrikesData(strikes);
+  return strikes[tag].count;
+}
+
+export async function resetStrikeForPlayer(tag) {
+  const strikes = await getAllStrikes();
+  if (strikes[tag]) {
+    delete strikes[tag];
+    await updateStrikesData(strikes);
+  }
+}
+
+export async function resetAllStrikes() {
+  await updateStrikesData({});
+}
+
 export async function getAllPlayers() {
   const { data, error } = await supabase
     .from('users')

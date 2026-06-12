@@ -53,9 +53,9 @@ export function getRelativeTimeStr(endTimeStr) {
 // Generate the standard keyboard
 function getMainMenu() {
   return Markup.keyboard([
-    ['🛡️ معلومات الكلان', '👤 حسابي'],
+    ['🛡️ معلومات الكلان', '🏆 أبطال الكلان'],
     ['⚔️ نقاط الحرب (اليوم)', '⚔️ نقاط الحرب (الأسبوع)'],
-    ['⚙️ الإعدادات']
+    ['👤 حسابي', '⚙️ الإعدادات']
   ]).resize();
 }
 
@@ -229,6 +229,10 @@ export async function initBot() {
     switch (text) {
       case '🛡️ معلومات الكلان':
         await handleClanInfo(ctx);
+        break;
+
+      case '🏆 أبطال الكلان':
+        await handleLeaderboard(ctx);
         break;
 
       case '⚔️ نقاط الحرب (اليوم)':
@@ -424,5 +428,62 @@ async function handleSettings(ctx) {
         [Markup.button.callback('📝 ربط الحساب الآن', 'link_account')]
       ])
     );
+  }
+}
+
+async function handleLeaderboard(ctx) {
+  const telegramId = ctx.from.id;
+  const player = await getPlayerByTelegramId(telegramId);
+  if (!player) {
+    return ctx.reply('🔒 عذراً، هذا الأمر مخصص لأعضاء الكلان فقط.\nيرجى التسجيل عبر الضغط على **الإعدادات** ثم **ربط الحساب** للتمكن من رؤية قائمة الأبطال.');
+  }
+
+  ctx.reply('جاري تحضير قائمة الشرف... 🏆✨');
+  
+  try {
+    const clanTag = await getSetting('clan_tag');
+    const clan = await getClanInfo(clanTag);
+    const war = await getUnifiedActiveWar();
+
+    // 1. Top Donators
+    let topDonators = [...(clan.memberList || [])]
+      .sort((a, b) => b.donations - a.donations)
+      .slice(0, 3);
+
+    // 2. Top War Attackers
+    let topAttackers = [];
+    if (war && war.clan && war.clan.members) {
+      topAttackers = [...war.clan.members]
+        .sort((a, b) => b.fame - a.fame)
+        .slice(0, 3);
+    }
+
+    const rankPrefixes = ['🥇 الأول', '🥈 الثاني', '🥉 الثالث'];
+    
+    let text = `👑 **لـوحـة الشــرف لأبـطـال الـكـلان** 👑\n\n`;
+    
+    text += `⚔️ **أبطال الحرب (أعلى شهرة):**\n`;
+    if (topAttackers.length > 0) {
+      topAttackers.forEach((m, i) => {
+        text += `${rankPrefixes[i]} **${m.name}**\n└ الشهرة: ${m.fame} 🏆\n`;
+      });
+    } else {
+      text += `لا توجد بيانات حرب حالياً.\n`;
+    }
+
+    text += `\n🎁 **أهل الكرم (أعلى دعم):**\n`;
+    if (topDonators.length > 0) {
+      topDonators.forEach((m, i) => {
+        text += `${rankPrefixes[i]} **${m.name}**\n└ الدعم: ${m.donations} بطاقة\n`;
+      });
+    } else {
+      text += `لا توجد بيانات دعم حالياً.\n`;
+    }
+
+    ctx.reply(text);
+
+  } catch (error) {
+    console.error('Leaderboard error:', error);
+    ctx.reply(`حدث خطأ أثناء إعداد لوحة الشرف: ${error.message}`);
   }
 }
