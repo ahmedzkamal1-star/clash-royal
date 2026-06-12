@@ -242,6 +242,32 @@ body {
   border-color: var(--gold-primary);
 }
 
+.filter-box select {
+  padding: 12px 20px;
+  background: #0a0e1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: white;
+  outline: none;
+  font-family: 'Cairo', sans-serif;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffd700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: left 15px center;
+  background-size: 15px;
+  padding-left: 40px;
+}
+
+.filter-box select:focus {
+  border-color: var(--gold-primary);
+}
+
+.filter-box select option {
+  background: var(--royal-blue-mid);
+  color: white;
+}
+
 .table-responsive {
   width: 100%;
   max-width: 100%;
