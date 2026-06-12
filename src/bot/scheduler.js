@@ -167,6 +167,84 @@ export async function triggerWarAlerts(forced = false) {
   }
 }
 
+/**
+ * Triggers individual PMs for missing attacks
+ */
+export async function triggerMissingAlerts() {
+  if (!botInstance) return { success: false, error: 'Telegram Bot is not running.' };
+
+  try {
+    const war = await getUnifiedActiveWar();
+    if (!war || !war.inWar) return { success: false, error: 'No active war.' };
+
+    const dbPlayers = await getAllPlayers();
+    const playerMap = new Map();
+    dbPlayers.forEach(p => playerMap.set(p.player_tag, p));
+
+    let count = 0;
+    const relativeTime = getRelativeTimeStr(war.endTime);
+
+    for (const member of war.clan.members) {
+      const decksUsedToday = member.decksUsedToday || 0;
+      const attacksRemaining = 4 - decksUsedToday;
+      
+      if (attacksRemaining > 0) {
+        const registered = playerMap.get(member.tag);
+        if (registered && registered.telegram_id) {
+          try {
+            const message = `⚠️ مرحباً **${member.name}**!\n\nلديك **${attacksRemaining}** هجمات حرب متبقية لليوم.\nالوقت المتبقي: ${relativeTime}\n\nنرجو منك إكمال الهجمات في أقرب وقت لدعم الكلان! ⚔️🛡️`;
+            await botInstance.telegram.sendMessage(registered.telegram_id, message, { parse_mode: 'Markdown' });
+            count++;
+          } catch (e) {
+            console.error(`Failed to message ${registered.telegram_id}:`, e.message);
+          }
+        }
+      }
+    }
+
+    return { success: true, message: `Sent ${count} individual alerts` };
+  } catch (error) {
+    console.error('Error in triggerMissingAlerts:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Triggers a PM to a single player by telegramId
+ */
+export async function triggerPlayerAlert(telegramId) {
+  if (!botInstance) return { success: false, error: 'Telegram Bot is not running.' };
+
+  try {
+    const war = await getUnifiedActiveWar();
+    if (!war || !war.inWar) return { success: false, error: 'No active war.' };
+
+    const dbPlayers = await getAllPlayers();
+    const player = dbPlayers.find(p => p.telegram_id === telegramId);
+    if (!player) return { success: false, error: 'Player not found in database.' };
+
+    const member = war.clan.members.find(m => m.tag === player.player_tag);
+    if (!member) return { success: false, error: 'Player not found in war roster.' };
+
+    const decksUsedToday = member.decksUsedToday || 0;
+    const attacksRemaining = 4 - decksUsedToday;
+    
+    if (attacksRemaining === 0) {
+      return { success: false, error: 'Player already completed all attacks.' };
+    }
+
+    const relativeTime = getRelativeTimeStr(war.endTime);
+    const message = `⚠️ تنبيه خاص لك يا **${member.name}**!\n\nالإدارة تذكرك بأن لديك **${attacksRemaining}** هجمات حرب متبقية لليوم.\nالوقت المتبقي لانتهاء اليوم: ${relativeTime}\n\nنعتمد عليك، لا تتأخر! 👑⚔️`;
+    
+    await botInstance.telegram.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
+
+    return { success: true, message: `Sent alert to ${member.name}` };
+  } catch (error) {
+    console.error('Error in triggerPlayerAlert:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
 export function startScheduler(bot) {
   // In serverless architecture (Vercel), we don't use setInterval.
   // Instead, the Vercel cron or an external ping (cron-job.org) will call the /api/cron endpoint

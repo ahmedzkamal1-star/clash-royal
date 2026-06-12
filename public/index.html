@@ -114,10 +114,15 @@
             <h3>⚙️ إجراءات سريعة</h3>
           </div>
           <div class="control-body">
-            <button id="btn-manual-alert" class="btn btn-gold btn-block btn-pulse">
-              <i class="fa-solid fa-bell"></i> إرسال تنبيه يدوي الآن
-            </button>
-            <p class="control-note">سيقوم هذا الخيار بفحص هجمات الحرب فوراً وإرسال تنبيه في التلجرام للأعضاء المتأخرين.</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+              <button id="btn-manual-alert" class="btn btn-gold btn-block btn-pulse" style="flex:1; padding:12px;">
+                <i class="fa-solid fa-users"></i> تنبيه للجميع
+              </button>
+              <button id="btn-missing-alert" class="btn btn-dark" style="flex:1; padding:12px;">
+                <i class="fa-solid fa-clock-rotate-left"></i> تنبيه المتأخرين
+              </button>
+            </div>
+            <p class="control-note">زر "تنبيه للجميع" يرسل تقرير الحرب للمجموعة. "تنبيه المتأخرين" يرسل إشعارات خاصة لكل عضو متأخر.</p>
           </div>
         </div>
 
@@ -160,8 +165,11 @@
                   <tr>
                     <th>موقع الخريطة</th>
                     <th>اللاعب</th>
-                    <th>مستوى اللاعب (King Level)</th>
-                    <th>حالة الهجمات (Decks)</th>
+                    <th>الرتبة</th>
+                    <th>الكؤوس</th>
+                    <th>التبرعات</th>
+                    <th>مستوى اللاعب</th>
+                    <th>حالة الهجمات</th>
                     <th>حساب التلجرام</th>
                     <th>الإجراءات</th>
                   </tr>

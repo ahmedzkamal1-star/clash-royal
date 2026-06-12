@@ -169,6 +169,9 @@ export async function getUnifiedActiveWar() {
       return {
         tag: m.tag,
         name: m.name,
+        role: m.role || 'member',
+        trophies: m.trophies || 0,
+        donations: m.donations || 0,
         townhallLevel: m.expLevel, // expLevel represents player level in CR
         mapPosition: m.clanRank,
         attacks: attacks, // length represents decksUsedToday
@@ -219,7 +222,7 @@ export async function getUnifiedActiveWar() {
     return {
       inWar: false,
       state: 'error',
-      message: error.message
+      reason: error.message || 'خطأ في جلب بيانات الحرب من كلاش رويال'
     };
   }
 }

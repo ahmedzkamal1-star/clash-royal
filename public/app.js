@@ -170,6 +170,16 @@ async function loadWarInfo() {
     if (!res.ok) throw new Error();
     const war = await res.json();
 
+    if (war.state === 'error') {
+      warInfoContainer.innerHTML = `
+        <div class="text-center py-4">
+          <i class="fa-solid fa-triangle-exclamation text-warning" style="font-size: 2.5rem; margin-bottom:10px;"></i>
+          <p>⚠️ ${war.reason || 'خطأ مؤقت في الاتصال بسيرفرات اللعبة'}</p>
+        </div>
+      `;
+      return;
+    }
+
     if (!war.inWar) {
       warInfoContainer.innerHTML = `
         <div class="text-center py-4">
@@ -328,15 +338,34 @@ function renderPlayersTable() {
         <div style="font-size:0.75rem; color:var(--color-text-gray);">ID: ${p.telegramId}</div>
       `;
       
+      let alertBtn = '';
+      if (p.inWar && p.attacksRemaining > 0) {
+        alertBtn = `
+          <button class="btn btn-gold" style="padding: 5px 10px; font-size: 0.8rem; margin-left: 5px;" onclick="alertPlayer('${p.telegramId}', '${p.name}')" title="تنبيه فردي">
+            <i class="fa-solid fa-bell"></i>
+          </button>
+        `;
+      }
+
       actionCol = `
-        <button class="btn btn-dark" onclick="unlinkPlayer('${p.telegramId}', '${p.name}')" title="إلغاء ربط الحساب">
-          <i class="fa-solid fa-link-slash text-danger"></i>
-        </button>
+        <div style="display:flex; justify-content:center; gap:5px;">
+          ${alertBtn}
+          <button class="btn btn-dark" style="padding: 5px 10px; font-size: 0.8rem;" onclick="unlinkPlayer('${p.telegramId}', '${p.name}')" title="إلغاء ربط الحساب">
+            <i class="fa-solid fa-link-slash text-danger"></i>
+          </button>
+        </div>
       `;
     } else {
-      telegramCol = `<span class="badge badge-red"><i class="fa-solid fa-circle-exclamation"></i> غير مربوط بالبوت</span>`;
-      actionCol = `<button class="btn btn-dark" disabled title="لا يمكن إلغاء ربط حساب غير مسجل"><i class="fa-solid fa-link-slash text-danger" style="opacity:0.3"></i></button>`;
+      telegramCol = `<span class="badge badge-red"><i class="fa-solid fa-circle-exclamation"></i> غير مربوط</span>`;
+      actionCol = `<button class="btn btn-dark" disabled title="لا يمكن إلغاء ربط حساب غير مسجل" style="padding: 5px 10px; font-size: 0.8rem;"><i class="fa-solid fa-link-slash text-danger" style="opacity:0.3"></i></button>`;
     }
+
+    const roleTranslate = {
+      'leader': 'قائد',
+      'coLeader': 'مساعد قائد',
+      'elder': 'عضو مميز',
+      'member': 'عضو'
+    };
 
     return `
       <tr>
@@ -345,9 +374,10 @@ function renderPlayersTable() {
           <div style="font-weight:700;">${p.name}</div>
           <div class="tag-display" style="font-size:0.7rem; margin:0;">${p.tag}</div>
         </td>
-        <td class="text-center" style="font-weight: 700;">
-          👑 ${p.townhallLevel || '--'}
-        </td>
+        <td class="text-center">${roleTranslate[p.role] || p.role || 'عضو'}</td>
+        <td class="text-center" style="color:var(--gold-primary); font-weight:bold;">🏆 ${p.trophies || 0}</td>
+        <td class="text-center text-success">${p.donations || 0}</td>
+        <td class="text-center" style="font-weight: 700;">👑 ${p.townhallLevel || '--'}</td>
         <td>${attackBadge}</td>
         <td>${telegramCol}</td>
         <td class="text-center">${actionCol}</td>
@@ -370,10 +400,33 @@ window.unlinkPlayer = async function(telegramId, playerName) {
       showToast('تم إلغاء ربط الحساب بنجاح ✅');
       loadPlayersList();
     } else {
-      showToast('فشل في إلغاء ربط الحساب ❌');
+      showToast('خطأ في إلغاء الربط', true);
     }
   } catch (err) {
-    showToast('حدث خطأ بالشبكة ❌');
+    showToast('خطأ في الاتصال بالخادم', true);
+  }
+};
+
+window.alertPlayer = async function(telegramId, playerName) {
+  if (!confirm(`هل تريد إرسال تنبيه خاص للاعب (${playerName}) لإنهاء هجماته؟`)) return;
+
+  try {
+    const res = await fetch(`/api/alert-player`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': apiToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ telegramId })
+    });
+    
+    if (res.ok) {
+      showToast('تم إرسال التنبيه بنجاح 🔔');
+    } else {
+      showToast('خطأ في إرسال التنبيه', true);
+    }
+  } catch (err) {
+    showToast('خطأ في الاتصال بالخادم', true);
   }
 };
 
@@ -474,12 +527,43 @@ btnManualAlert.addEventListener('click', async () => {
       showToast(`فشل الإرسال: ${data.error || 'حدث خطأ غير معروف'}`);
     }
   } catch (err) {
-    showToast('حدث خطأ بالشبكة أثناء محاولة إرسال التنبيهات ❌');
+    showToast('خطأ في الاتصال بالخادم ❌', true);
   } finally {
     btnManualAlert.disabled = false;
-    btnManualAlert.innerHTML = '<i class="fa-solid fa-bell"></i> إرسال تنبيه يدوي الآن';
+    btnManualAlert.innerHTML = '<i class="fa-solid fa-users"></i> تنبيه للجميع';
   }
 });
+
+// Trigger Missing alerts
+const btnMissingAlert = document.getElementById('btn-missing-alert');
+if (btnMissingAlert) {
+  btnMissingAlert.addEventListener('click', async () => {
+    if (!confirm('هل تريد إرسال تنبيهات خاصة للأعضاء الذين لم يكملوا هجماتهم فقط؟')) return;
+    
+    btnMissingAlert.disabled = true;
+    btnMissingAlert.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري الإرسال...';
+    
+    try {
+      const res = await fetch('/api/alert-missing', {
+        method: 'POST',
+        headers: { 'Authorization': apiToken }
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        showToast(`تم إرسال التنبيهات الفردية بنجاح! 🔔 (${data.message})`);
+      } else {
+        showToast(`فشل في الإرسال: ${data.error || 'خطأ غير معروف'} ❌`, true);
+      }
+    } catch (err) {
+      showToast('خطأ في الاتصال بالخادم ❌', true);
+    } finally {
+      btnMissingAlert.disabled = false;
+      btnMissingAlert.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> تنبيه المتأخرين';
+    }
+  });
+}
 
 // Toast system
 function showToast(message, duration = 4000) {

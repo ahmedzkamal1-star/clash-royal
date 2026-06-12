@@ -10,7 +10,7 @@ import {
   getSetting
 } from '../db/index.js';
 import { getClanInfo, getUnifiedActiveWar } from '../coc/api.js';
-import { triggerWarAlerts } from '../bot/scheduler.js';
+import { triggerWarAlerts, triggerMissingAlerts, triggerPlayerAlert } from '../bot/scheduler.js';
 import { restartBot } from '../bot/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -108,6 +108,9 @@ export function setupApiRoutes(app) {
           return {
             tag: member.tag,
             name: member.name,
+            role: member.role,
+            trophies: member.trophies,
+            donations: member.donations,
             townhallLevel: member.townhallLevel,
             mapPosition: member.mapPosition,
             attacksDone,
@@ -127,6 +130,9 @@ export function setupApiRoutes(app) {
             list.push({
               tag: p.player_tag,
               name: p.player_name,
+              role: null,
+              trophies: null,
+              donations: null,
               townhallLevel: null,
               mapPosition: null,
               attacksDone: 0,
@@ -144,6 +150,9 @@ export function setupApiRoutes(app) {
         list = dbPlayers.map(p => ({
           tag: p.player_tag,
           name: p.player_name,
+          role: null,
+          trophies: null,
+          donations: null,
           townhallLevel: null,
           mapPosition: null,
           attacksDone: 0,
@@ -219,6 +228,28 @@ export function setupApiRoutes(app) {
   app.post('/api/manual-trigger', checkAuth, async (req, res) => {
     try {
       const result = await triggerWarAlerts(true); // true means forced trigger
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Trigger missing players alert
+  app.post('/api/alert-missing', checkAuth, async (req, res) => {
+    try {
+      const result = await triggerMissingAlerts();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Trigger individual player alert
+  app.post('/api/alert-player', checkAuth, async (req, res) => {
+    try {
+      const { telegramId } = req.body;
+      if (!telegramId) return res.status(400).json({ error: 'telegramId is required' });
+      const result = await triggerPlayerAlert(telegramId);
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
