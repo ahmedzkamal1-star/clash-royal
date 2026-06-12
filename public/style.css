@@ -95,12 +95,6 @@ body {
 }
 
 
-  .dashboard-sidebar, .dashboard-main {
-    width: 100%;
-    order: unset; /* Revert order on mobile */
-  }
-}
-
 /* Card Styling */
 .dashboard-card {
   background: var(--royal-blue-mid);
