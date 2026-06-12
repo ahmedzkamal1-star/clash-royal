@@ -171,29 +171,10 @@ export async function triggerWarAlerts(forced = false) {
   }
 }
 
-// Background loop interval
-let schedulerInterval = null;
-
 export function startScheduler(bot) {
+  // In serverless architecture (Vercel), we don't use setInterval.
+  // Instead, the Vercel cron or an external ping (cron-job.org) will call the /api/cron endpoint
+  // which invokes triggerWarAlerts directly.
   setBotInstance(bot);
-  
-  if (schedulerInterval) {
-    clearInterval(schedulerInterval);
-  }
-
-  // Run the check every 15 minutes
-  const checkIntervalMs = 15 * 60 * 1000;
-  
-  schedulerInterval = setInterval(async () => {
-    console.log('Scheduler: Checking active war status...');
-    await triggerWarAlerts(false);
-  }, checkIntervalMs);
-
-  // Run immediately on boot after 10 seconds
-  setTimeout(async () => {
-    console.log('Scheduler: Running initial boot war check...');
-    await triggerWarAlerts(false);
-  }, 10000);
-
-  console.log('War alert scheduler started successfully!');
+  console.log('Scheduler initialized in Serverless mode (waiting for /api/cron pings).');
 }

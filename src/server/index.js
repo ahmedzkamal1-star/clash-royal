@@ -16,16 +16,7 @@ import { restartBot } from '../bot/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export function startServer() {
-  const app = express();
-  const port = process.env.PORT || 3000;
-
-  app.use(cors());
-  app.use(express.json());
-  
-  // Serve dashboard static files
-  app.use(express.static(path.join(__dirname, '../../public')));
-
+export function setupApiRoutes(app) {
   // Authentication Middleware
   async function checkAuth(req, res, next) {
     const password = req.headers['authorization'] || req.query.token;
@@ -232,9 +223,5 @@ export function startServer() {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
-
-  app.listen(port, () => {
-    console.log(`Web Dashboard Backend listening on port ${port}`);
   });
 }

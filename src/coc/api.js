@@ -1,6 +1,6 @@
 import { getSetting } from '../db/index.js';
 
-const BASE_URL = 'https://api.clashroyale.com/v1';
+const BASE_URL = 'https://proxy.royaleapi.dev/v1';
 
 // Helper to make API calls to Clash Royale API
 async function royaleRequest(endpoint, method = 'GET', body = null) {

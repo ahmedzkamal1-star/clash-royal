@@ -234,13 +234,9 @@ export async function initBot() {
     }
   });
 
-  // Start bot polling
-  bot.launch();
-  console.log('Telegram Bot started successfully!');
-  
-  process.once('SIGINT', () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
+  // In Serverless mode, we DO NOT call bot.launch() here.
+  // We return the bot instance so the Express app can use bot.handleUpdate() via webhookCallback.
+  console.log('Telegram Bot configured successfully for Serverless Webhooks!');
   return bot;
 }
 
