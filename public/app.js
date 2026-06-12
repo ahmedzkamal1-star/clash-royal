@@ -377,7 +377,6 @@ function renderPlayersTable() {
         <td class="text-center">${roleTranslate[p.role] || p.role || 'عضو'}</td>
         <td class="text-center" style="color:var(--gold-primary); font-weight:bold;">🏆 ${p.trophies || 0}</td>
         <td class="text-center text-success">${p.donations || 0}</td>
-        <td class="text-center" style="font-weight: 700;">👑 ${p.townhallLevel || '--'}</td>
         <td>${attackBadge}</td>
         <td>${telegramCol}</td>
         <td class="text-center">${actionCol}</td>

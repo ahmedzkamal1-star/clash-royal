@@ -497,3 +497,15 @@ body {
 #theme-toggle {
   display: none !important;
 }
+
+/* War Panel Specific Styles */
+.war-stats-summary { padding: 15px; }
+.war-score-panel { display: flex; justify-content: space-around; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+.clan-score, .opponent-score { text-align: center; }
+.vs-divider { font-weight: 900; color: var(--gold-primary); font-size: 1.5rem; padding: 0 20px; }
+.war-time-panel { margin-top: 20px; background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 10px; text-align: center; }
+.war-time-title { font-size: 0.9rem; color: var(--text-muted); }
+.war-time-clock { font-size: 1.5rem; font-weight: bold; color: var(--gold-primary); font-family: monospace; }
+.control-body { padding: 20px; }
+.btn-pulse { animation: pulseBtn 2s infinite; }
+@keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
