@@ -190,48 +190,19 @@ export async function initBot() {
             );
           }
 
-          // Move to next step
-          session.step = 'awaiting_token';
-          session.tag = tag;
-          session.playerName = player.name;
-          session.expLevel = player.expLevel;
-
+          await registerPlayer(telegramId, username, telegramName, tag, player.name, 1);
+          registrationSessions.delete(telegramId);
+          
           return ctx.reply(
-            `أهلاً بك **${player.name}**! ✅\n\n` +
-            `لإثبات ملكيتك لهذا الحساب (ومنع سرقته)، يرجى إرسال **رمز الـ API (API Token)** الخاص بك.\n\n` +
-            `📍 **كيف تجده؟**\n` +
-            `1. افتح لعبة Clash Royale\n` +
-            `2. اذهب إلى الإعدادات (Settings)\n` +
-            `3. انزل للأسفل واضغط على زر (Show API Token)\n` +
-            `4. اضغط على (Copy) ثم الصقه هنا:`
+            `تم التحقق والربط بنجاح! 🎉\n` +
+            `اللاعب المربوط: **${player.name}** (${tag}) ✅\n\n` +
+            `ستصلك الآن تنبيهات الهجمات المتبقية يومياً قبل انتهاء وقت الحرب! ⚔️`,
+            getMainMenu()
           );
 
         } catch (error) {
           console.error(error);
           return ctx.reply('لم نتمكن من العثور على هذا اللاعب! ❌\nيرجى التأكد من كتابة الـ Tag بشكل صحيح وإرساله مجدداً:');
-        }
-      } else if (session.step === 'awaiting_token') {
-        const apiToken = text.trim();
-        ctx.reply('جاري التحقق من ملكية الحساب... 🔒');
-
-        const isValid = await verifyPlayerApiToken(session.tag, apiToken);
-        
-        if (isValid) {
-          await registerPlayer(telegramId, username, telegramName, session.tag, session.playerName, 1);
-          registrationSessions.delete(telegramId);
-          
-          return ctx.reply(
-            `تم التحقق والربط بنجاح! 🎉\n` +
-            `اللاعب المربوط: **${session.playerName}** (${session.tag}) ✅\n` +
-            `مستوى اللاعب: ${session.expLevel} ⭐\n\n` +
-            `ستصلك الآن تنبيهات الهجمات المتبقية يومياً قبل انتهاء وقت الحرب! ⚔️`,
-            getMainMenu()
-          );
-        } else {
-          return ctx.reply(
-            `عذراً! الرمز الذي أدخلته غير صحيح أو منتهي الصلاحية. ❌\n\n` +
-            `يرجى التأكد من نسخ الرمز بالكامل وإرساله مجدداً، أو كتابة /cancel لإلغاء التسجيل.`
-          );
         }
       }
     }
