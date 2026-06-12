@@ -289,15 +289,35 @@ async function handleWarInfo(ctx) {
       return ctx.reply(`لا يمكن عرض الحرب حالياً: ${war.message || 'لا توجد حرب نشطة'}`);
     }
 
-    const stateStr = war.state === 'trainingDay' ? 'أيام تدريب (Practice)' : 'يوم حرب (Battle Day)';
+    const stateStr = war.state === 'trainingDay' ? 'أيام تدريب' : 'يوم حرب';
     
-    let text = `⚔️ **سباق النهر الحالي (River Race)**\n`;
-    text += `• الحالة: **${stateStr}**\n`;
-    text += `• الأعضاء المشاركين اليوم: ${war.clan.members.filter(m => m.decksUsedToday > 0).length}/${war.teamSize}\n`;
-    text += `• إجمالي الهجمات (Decks) الملعوبة اليوم: ${war.clan.attacks} هجمة\n`;
-    text += `• الشهرة (Fame) الكلية: ${war.clan.stars} 🏆\n`;
-    text += `• تنتهي الجولة اليومية خلال: **${getRelativeTimeStr(war.endTime)}** ⏱️\n\n`;
-    text += `📊 الخصم المتصدر حالياً: **${war.opponent.name}** بشهرة ${war.opponent.stars} 🏆`;
+    let text = `⚔️ حالة الحرب: **${stateStr}**\n\n`;
+
+    const rankPrefixes = ['🥇 الأول', '🥈 الثاني', '🥉 الثالث', '🏅 الرابع', '🎖️ الخامس'];
+    if (war.clans && war.clans.length > 0) {
+      war.clans.forEach((c, i) => {
+        const isUs = c.tag === war.clan.tag ? ' (نحن 🛡️)' : '';
+        const prefix = rankPrefixes[i] || `${i + 1}-`;
+        text += `${prefix} كلان **${c.name}**${isUs}\n└ نقاط القبيلة: ${c.fame} 🏆\n`;
+      });
+    }
+
+    let topFame = -1;
+    let topPlayer = 'لا أحد';
+    war.clan.members.forEach(m => {
+       if (m.fame > topFame) {
+          topFame = m.fame;
+          topPlayer = m.name;
+       }
+    });
+
+    const played = war.clan.attacks;
+    const remaining = (war.teamSize * 4) - played;
+
+    text += `\n⚔️ عدد الهجمات الحالية: ${played}\n`;
+    text += `⏳ الهجمات المتبقية: ${remaining}\n`;
+    text += `⏱️ تنتهي الجولة اليومية خلال: **${getRelativeTimeStr(war.endTime)}**\n`;
+    text += `👑 متصدر الحرب في الكلان: **${topPlayer}** (${topFame} 🏆)\n`;
     
     return ctx.reply(text);
   } catch (error) {

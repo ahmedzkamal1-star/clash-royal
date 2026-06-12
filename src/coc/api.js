@@ -159,6 +159,7 @@ export async function getUnifiedActiveWar() {
     const normalizedMembers = membersList.map(m => {
       const part = participantMap.get(m.tag);
       const decksUsedToday = part ? part.decksUsedToday : 0;
+      const fame = part ? part.fame : 0;
       
       // Simulate attacks array for backward compatibility
       const attacks = [];
@@ -172,6 +173,7 @@ export async function getUnifiedActiveWar() {
         role: m.role || 'member',
         trophies: m.trophies || 0,
         donations: m.donations || 0,
+        fame: fame,
         townhallLevel: m.expLevel, // expLevel represents player level in CR
         mapPosition: m.clanRank,
         attacks: attacks, // length represents decksUsedToday
@@ -194,6 +196,15 @@ export async function getUnifiedActiveWar() {
       });
     }
 
+    let allClans = [];
+    if (race.clans) {
+      allClans = race.clans.map(c => ({
+        tag: c.tag,
+        name: c.name,
+        fame: c.fame || 0
+      })).sort((a, b) => b.fame - a.fame);
+    }
+
     return {
       inWar: inWar,
       type: 'riverRace',
@@ -201,6 +212,7 @@ export async function getUnifiedActiveWar() {
       teamSize: membersList.length,
       startTime: now.toISOString(),
       endTime: endTimeStr,
+      clans: allClans,
       clan: {
         tag: cleanClanTag,
         name: clanDetails.name,
