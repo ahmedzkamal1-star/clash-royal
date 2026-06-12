@@ -32,7 +32,29 @@ const toast = document.getElementById('toast');
 const toastMessage = document.getElementById('toast-message');
 
 // Check authentication on startup
+const themeToggle = document.getElementById('theme-toggle');
+
+// Initialize theme from localStorage
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+  if (themeToggle) themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Theme toggle listener
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      if (document.body.classList.contains('light-mode')) {
+        localStorage.setItem('theme', 'light');
+        themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+      } else {
+        localStorage.setItem('theme', 'dark');
+        themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+      }
+    });
+  }
+
   if (apiToken) {
     verifyTokenAndLoad();
   } else {

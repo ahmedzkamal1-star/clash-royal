@@ -62,6 +62,23 @@ export async function verifyPlayerToken(playerTag, token = '') {
 }
 
 /**
+ * Verifies the player's official API token (found in game settings) to prove ownership.
+ * @param {string} playerTag 
+ * @param {string} apiToken
+ * @returns {Promise<boolean>}
+ */
+export async function verifyPlayerApiToken(playerTag, apiToken) {
+  try {
+    const cleanTag = playerTag.toUpperCase().startsWith('#') ? playerTag.toUpperCase() : `#${playerTag.toUpperCase()}`;
+    const response = await royaleRequest(`/players/${cleanTag}/verifytoken`, 'POST', { token: apiToken });
+    return response.status === 'ok';
+  } catch (error) {
+    console.error('Error verifying API Token:', error.message);
+    return false;
+  }
+}
+
+/**
  * Gets detailed player information
  * @param {string} playerTag 
  */

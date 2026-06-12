@@ -7,10 +7,10 @@ import {
   deletePlayerMapping,
   updateSetting
 } from '../db/index.js';
-import { 
   getPlayerInfo, 
   getClanInfo, 
-  getUnifiedActiveWar 
+  getUnifiedActiveWar,
+  verifyPlayerApiToken
 } from '../coc/api.js';
 import { startScheduler } from './scheduler.js';
 
@@ -189,20 +189,48 @@ export async function initBot() {
             );
           }
 
-          // Directly save mapping (no API token verification needed for Clash Royale)
-          await registerPlayer(telegramId, username, telegramName, tag, player.name, 1);
+          // Move to next step
+          session.step = 'awaiting_token';
+          session.tag = tag;
+          session.playerName = player.name;
+          session.expLevel = player.expLevel;
+
+          return ctx.reply(
+            `أهلاً بك **${player.name}**! ✅\n\n` +
+            `لإثبات ملكيتك لهذا الحساب (ومنع سرقته)، يرجى إرسال **رمز الـ API (API Token)** الخاص بك.\n\n` +
+            `📍 **كيف تجده؟**\n` +
+            `1. افتح لعبة Clash Royale\n` +
+            `2. اذهب إلى الإعدادات (Settings)\n` +
+            `3. انزل للأسفل واضغط على زر (Show API Token)\n` +
+            `4. اضغط على (Copy) ثم الصقه هنا:`
+          );
+
+        } catch (error) {
+          console.error(error);
+          return ctx.reply('لم نتمكن من العثور على هذا اللاعب! ❌\nيرجى التأكد من كتابة الـ Tag بشكل صحيح وإرساله مجدداً:');
+        }
+      } else if (session.step === 'awaiting_token') {
+        const apiToken = text.trim();
+        ctx.reply('جاري التحقق من ملكية الحساب... 🔒');
+
+        const isValid = await verifyPlayerApiToken(session.tag, apiToken);
+        
+        if (isValid) {
+          await registerPlayer(telegramId, username, telegramName, session.tag, session.playerName, 1);
           registrationSessions.delete(telegramId);
           
           return ctx.reply(
             `تم التحقق والربط بنجاح! 🎉\n` +
-            `اللاعب المربوط: **${player.name}** (${tag}) ✅\n` +
-            `مستوى اللاعب: ${player.expLevel} ⭐\n\n` +
+            `اللاعب المربوط: **${session.playerName}** (${session.tag}) ✅\n` +
+            `مستوى اللاعب: ${session.expLevel} ⭐\n\n` +
             `ستصلك الآن تنبيهات الهجمات المتبقية يومياً قبل انتهاء وقت الحرب! ⚔️`,
             getMainMenu()
           );
-        } catch (error) {
-          console.error(error);
-          return ctx.reply('لم نتمكن من العثور على هذا اللاعب! ❌\nيرجى التأكد من كتابة الـ Tag بشكل صحيح وإرساله مجدداً:');
+        } else {
+          return ctx.reply(
+            `عذراً! الرمز الذي أدخلته غير صحيح أو منتهي الصلاحية. ❌\n\n` +
+            `يرجى التأكد من نسخ الرمز بالكامل وإرساله مجدداً، أو كتابة /cancel لإلغاء التسجيل.`
+          );
         }
       }
     }
@@ -242,6 +270,12 @@ export async function initBot() {
 
 // Handler functions
 async function handleClanInfo(ctx) {
+  const telegramId = ctx.from.id;
+  const player = await getPlayerByTelegramId(telegramId);
+  if (!player) {
+    return ctx.reply('🔒 عذراً، هذا الأمر مخصص لأعضاء الكلان فقط.\nيرجى التسجيل عبر الضغط على **📝 ربط الحساب** للتمكن من رؤية بيانات الكلان.');
+  }
+
   ctx.reply('جاري جلب معلومات الكلان... 🔍');
   try {
     const clanTag = await getSetting('clan_tag');
@@ -266,6 +300,12 @@ async function handleClanInfo(ctx) {
 }
 
 async function handleWarInfo(ctx) {
+  const telegramId = ctx.from.id;
+  const player = await getPlayerByTelegramId(telegramId);
+  if (!player) {
+    return ctx.reply('🔒 عذراً، هذا الأمر مخصص لأعضاء الكلان فقط.\nيرجى التسجيل عبر الضغط على **📝 ربط الحساب** للتمكن من رؤية بيانات الحرب.');
+  }
+
   ctx.reply('جاري جلب تفاصيل سباق النهر الحالي... 🔍');
   try {
     const war = await getUnifiedActiveWar();

@@ -23,6 +23,20 @@
   --glass-bg: rgba(13, 22, 53, 0.85);
   --glass-border: 1.5px solid rgba(212, 175, 55, 0.3);
   --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --input-bg: rgba(255, 255, 255, 0.05);
+}
+
+body.light-mode {
+  --color-bg-dark: #f0f2f5;
+  --color-bg-light: #e4e6eb;
+  --color-royal-blue: #3b5998;
+  --color-royal-blue-dark: #2a4170;
+  --color-text-white: #1c1e21;
+  --color-text-gray: #606770;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: 1.5px solid rgba(212, 175, 55, 0.6);
+  --card-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+  --input-bg: rgba(0, 0, 0, 0.05);
 }
 
 body {
@@ -143,8 +157,9 @@ body {
   background: var(--glass-bg);
   border: 2px solid var(--color-gold);
   border-radius: 16px;
-  padding: 40px;
-  width: 420px;
+  padding: 30px;
+  width: 90%;
+  max-width: 350px;
   box-shadow: var(--card-shadow), 0 0 30px rgba(255, 215, 0, 0.2);
   text-align: center;
   animation: slideIn 0.5s ease-out;
