@@ -78,6 +78,8 @@ body {
 .dashboard-content {
   display: flex;
   gap: 25px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .dashboard-sidebar {
@@ -86,7 +88,8 @@ body {
 }
 
 .dashboard-main {
-  flex: 1;
+  flex: 1 1 0%;
+  width: 0;
   min-width: 0;
   max-width: 100%;
 }
@@ -208,6 +211,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  flex-wrap: wrap;
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
