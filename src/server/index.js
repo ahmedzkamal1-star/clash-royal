@@ -102,7 +102,7 @@ export function setupApiRoutes(app) {
         // Find who is in war, their attack status, and if they are registered
         list = war.clan.members.map(member => {
           const registered = playerMap.get(member.tag);
-          const maxAttacks = war.type === 'cwl' ? 1 : 2;
+          const maxAttacks = war.type === 'cwl' ? 1 : 4;
           const attacksDone = member.attacks ? member.attacks.length : 0;
           
           return {

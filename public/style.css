@@ -83,13 +83,11 @@ body {
 .dashboard-sidebar {
   width: 380px;
   flex-shrink: 0;
-  order: 2; /* Move sidebar to the left in RTL */
 }
 
 .dashboard-main {
   flex: 1;
   min-width: 0;
-  order: 1; /* Move main content to the right in RTL */
 }
 
 @media (max-width: 1100px) {
