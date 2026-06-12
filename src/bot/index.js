@@ -5,7 +5,9 @@ import {
   registerPlayer, 
   getPlayerByTelegramId, 
   deletePlayerMapping,
-  updateSetting
+  updateSetting,
+  getUserPreference,
+  setUserPreference
 } from '../db/index.js';
 import { 
   getPlayerInfo, 
@@ -180,6 +182,36 @@ export async function initBot() {
   bot.action('link_account', async (ctx) => {
     ctx.answerCbQuery();
     await startRegistration(ctx);
+  });
+
+  bot.action('change_reminder', async (ctx) => {
+    ctx.answerCbQuery();
+    ctx.editMessageText(
+      `⏰ **تحديد موعد التنبيه**\n\nمتى تفضل أن يقوم البوت بتنبيهك للعب هجماتك المتبقية قبل نهاية وقت الحرب؟`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('قبل 2 ساعة', 'set_reminder_2'), Markup.button.callback('قبل 4 ساعات', 'set_reminder_4')],
+        [Markup.button.callback('قبل 8 ساعات', 'set_reminder_8'), Markup.button.callback('قبل 12 ساعة', 'set_reminder_12')],
+        [Markup.button.callback('إلغاء التنبيه تماماً', 'set_reminder_0')]
+      ])
+    );
+  });
+
+  bot.action(/^set_reminder_(\d+)$/, async (ctx) => {
+    const hours = parseInt(ctx.match[1]);
+    const telegramId = ctx.from.id;
+    
+    try {
+      await setUserPreference(telegramId, 'reminder_hours', hours);
+      ctx.answerCbQuery(`تم حفظ موعد التنبيه بنجاح ✅`);
+      
+      const msg = hours === 0 
+        ? `🔕 تم إيقاف التنبيهات الخاصة بك.`
+        : `⏰ تم الحفظ! سيتم تنبيهك قبل نهاية الحرب بـ ${hours} ساعات.`;
+        
+      ctx.editMessageText(msg);
+    } catch (e) {
+      ctx.answerCbQuery('حدث خطأ أثناء الحفظ ❌');
+    }
   });
 
   // Handle text messages (Menu Buttons & Registration Flow)
@@ -422,13 +454,16 @@ async function handleSettings(ctx) {
   const player = await getPlayerByTelegramId(telegramId);
   
   if (player) {
+    const reminderHours = await getUserPreference(telegramId, 'reminder_hours', 4);
     return ctx.reply(
       `⚙️ **الإعدادات الشخصية**\n\n` +
       `👤 حسابك الحالي المربوط:\n` +
       `الاسم: **${player.player_name}**\n` +
       `التاغ: ${player.player_tag}\n\n` +
-      `لتغيير الحساب أو إزالة الربط، اضغط على الزر أدناه:`,
+      `⏰ **موعد التنبيه الحالي:** قبل نهاية الحرب بـ ${reminderHours} ساعات\n\n` +
+      `اختر من الأزرار بالأسفل لتغيير الإعدادات:`,
       Markup.inlineKeyboard([
+        [Markup.button.callback('⏰ تغيير موعد التنبيه', 'change_reminder')],
         [Markup.button.callback('❌ إلغاء ربط الحساب', 'unlink_account')]
       ])
     );

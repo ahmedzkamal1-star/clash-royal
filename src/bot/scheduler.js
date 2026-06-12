@@ -1,4 +1,4 @@
-import { getSetting, getAllPlayers, addStrikeToPlayer } from '../db/index.js';
+import { getSetting, getAllPlayers, addStrikeToPlayer, getAllUserPreferences } from '../db/index.js';
 import { getUnifiedActiveWar } from '../coc/api.js';
 import { getRelativeTimeStr } from './index.js';
 
@@ -25,7 +25,6 @@ export async function triggerWarAlerts(forced = false) {
       return { success: true, message: 'No active war to alert for.' };
     }
 
-    // Removed redundant state check because getUnifiedActiveWar already handles active war states.
     const endTime = new Date(war.endTime);
     const now = new Date();
     const diffMs = endTime - now;
@@ -41,9 +40,10 @@ export async function triggerWarAlerts(forced = false) {
     const warningHoursSetting = await getSetting('warning_hours');
     const warningHours = warningHoursSetting
       ? warningHoursSetting.split(',').map(h => parseFloat(h.trim())).filter(h => !isNaN(h))
-      : [12, 6, 2, 1];
+      : [12, 8, 4, 2];
     
     const groupChatId = await getSetting('group_chat_id');
+    const prefs = await getAllUserPreferences();
 
     // Determine if we should alert
     let shouldAlert = forced;
@@ -112,6 +112,16 @@ export async function triggerWarAlerts(forced = false) {
     let dmCount = 0;
     for (const player of playersWithAttacks) {
       if (player.registered && player.telegramId) {
+        // Evaluate preference
+        const idStr = String(player.telegramId);
+        const prefHours = (prefs[idStr] && prefs[idStr].reminder_hours !== undefined) 
+                          ? prefs[idStr].reminder_hours 
+                          : 4;
+        
+        // Skip if user disabled alerts (0) or if this threshold is not their chosen one
+        if (prefHours === 0) continue;
+        if (!forced && activeThreshold !== prefHours) continue;
+
         try {
           const dmText = `⚠️ **تنبيه هام من الكلان!** ⚔️\n\nبطلنا **${player.telegramName}** (${player.name})، يتبقى لديك **${player.attacksRemaining}** هجمات (Decks) في حرب الكلان اليوم!\n⏰ ينتهي وقت الحرب اليومي خلال: **${relativeTime}**.\n\nالرجاء لعب هجماتك المتبقية سريعاً! 🛡️👑`;
           await botInstance.telegram.sendMessage(player.telegramId, dmText, { parse_mode: 'Markdown' });

@@ -211,3 +211,37 @@ export async function deletePlayerMapping(telegramId) {
     throw error;
   }
 }
+
+// ----- USER PREFERENCES MANAGEMENT -----
+export async function getAllUserPreferences() {
+  const data = await getSetting('user_preferences');
+  if (!data) return {};
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return {};
+  }
+}
+
+export async function updateUserPreferencesData(prefsObj) {
+  await updateSetting('user_preferences', JSON.stringify(prefsObj));
+}
+
+export async function getUserPreference(telegramId, key, defaultValue = null) {
+  const prefs = await getAllUserPreferences();
+  const idStr = String(telegramId);
+  if (prefs[idStr] && prefs[idStr][key] !== undefined) {
+    return prefs[idStr][key];
+  }
+  return defaultValue;
+}
+
+export async function setUserPreference(telegramId, key, value) {
+  const prefs = await getAllUserPreferences();
+  const idStr = String(telegramId);
+  if (!prefs[idStr]) {
+    prefs[idStr] = {};
+  }
+  prefs[idStr][key] = value;
+  await updateUserPreferencesData(prefs);
+}
