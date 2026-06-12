@@ -19,6 +19,7 @@ import { startScheduler } from './scheduler.js';
 
 let bot = null;
 const registrationSessions = new Map();
+const customReminderSessions = new Set();
 
 // Helper to restart bot dynamically
 export async function restartBot() {
@@ -191,9 +192,17 @@ export async function initBot() {
       Markup.inlineKeyboard([
         [Markup.button.callback('قبل 2 ساعة', 'set_reminder_2'), Markup.button.callback('قبل 4 ساعات', 'set_reminder_4')],
         [Markup.button.callback('قبل 8 ساعات', 'set_reminder_8'), Markup.button.callback('قبل 12 ساعة', 'set_reminder_12')],
-        [Markup.button.callback('إلغاء التنبيه تماماً', 'set_reminder_0')]
+        [Markup.button.callback('إلغاء التنبيه الإضافي', 'set_reminder_0')],
+        [Markup.button.callback('✍️ إدخال عدد ساعات مخصص', 'set_reminder_custom')]
       ])
     );
+  });
+
+  bot.action('set_reminder_custom', (ctx) => {
+    ctx.answerCbQuery();
+    const telegramId = ctx.from.id;
+    customReminderSessions.add(telegramId);
+    ctx.reply('✍️ أرسل الآن رقماً يمثل عدد الساعات التي تريد التنبيه قبلها (مثال: 5 أو 10):', Markup.keyboard([['❌ إلغاء']]).resize());
   });
 
   bot.action(/^set_reminder_(\d+)$/, async (ctx) => {
@@ -205,8 +214,8 @@ export async function initBot() {
       ctx.answerCbQuery(`تم حفظ موعد التنبيه بنجاح ✅`);
       
       const msg = hours === 0 
-        ? `🔕 تم إيقاف التنبيهات الخاصة بك.`
-        : `⏰ تم الحفظ! سيتم تنبيهك قبل نهاية الحرب بـ ${hours} ساعات.`;
+        ? `🔕 تم إيقاف التنبيه المخصص (لكن سيصلك التنبيه الإجباري للجميع قبل النهاية بساعة).`
+        : `⏰ تم الحفظ! سيتم تنبيهك قبل نهاية الحرب بـ ${hours} ساعات، وأيضاً التنبيه الإجباري للجميع قبل النهاية بساعة.`;
         
       ctx.editMessageText(msg);
     } catch (e) {
@@ -222,6 +231,15 @@ export async function initBot() {
     const telegramName = [ctx.from.first_name, ctx.from.last_name].filter(Boolean).join(' ');
 
     // Handle cancel button from keyboard
+    if (text === '❌ إلغاء') {
+      if (customReminderSessions.has(telegramId)) {
+        customReminderSessions.delete(telegramId);
+        const player = await getPlayerByTelegramId(telegramId);
+        return ctx.reply('تم إلغاء عملية تحديد الوقت. ❌', getMainMenu(!!player));
+      }
+    }
+
+    // Handle cancel button from keyboard
     if (text === '❌ إلغاء التسجيل') {
       const player = await getPlayerByTelegramId(telegramId);
       if (registrationSessions.has(telegramId)) {
@@ -230,7 +248,25 @@ export async function initBot() {
       }
     }
 
-    // 1. Check if user is in registration session (Single step tag validation)
+    // 1. Check custom reminder session
+    if (customReminderSessions.has(telegramId)) {
+      const hours = parseInt(text);
+      if (isNaN(hours) || hours < 1 || hours > 48) {
+        return ctx.reply('❌ يرجى إدخال رقم صحيح بين 1 و 48 (مثال: 5).');
+      }
+      
+      customReminderSessions.delete(telegramId);
+      try {
+        await setUserPreference(telegramId, 'reminder_hours', hours);
+        const player = await getPlayerByTelegramId(telegramId);
+        ctx.reply(`⏰ تم الحفظ بنجاح! سيتم تنبيهك قبل نهاية الحرب بـ ${hours} ساعات، وأيضاً التنبيه الإجباري للجميع قبل النهاية بساعة.`, getMainMenu(!!player));
+      } catch (e) {
+        ctx.reply('حدث خطأ أثناء حفظ الإعدادات.');
+      }
+      return;
+    }
+
+    // 2. Check if user is in registration session
     if (registrationSessions.has(telegramId)) {
       const session = registrationSessions.get(telegramId);
 

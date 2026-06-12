@@ -36,11 +36,9 @@ export async function triggerWarAlerts(forced = false) {
     const remainingHours = diffMs / (1000 * 60 * 60);
     const relativeTime = getRelativeTimeStr(war.endTime);
 
-    // Get configuration settings
-    const warningHoursSetting = await getSetting('warning_hours');
-    const warningHours = warningHoursSetting
-      ? warningHoursSetting.split(',').map(h => parseFloat(h.trim())).filter(h => !isNaN(h))
-      : [12, 8, 4, 2];
+    const groupWarningHours = await getSetting('warning_hours')
+      ? (await getSetting('warning_hours')).split(',').map(h => parseFloat(h.trim())).filter(h => !isNaN(h))
+      : [12, 8, 4, 2, 1];
     
     const groupChatId = await getSetting('group_chat_id');
     const prefs = await getAllUserPreferences();
@@ -50,13 +48,13 @@ export async function triggerWarAlerts(forced = false) {
     let activeThreshold = null;
 
     if (!forced) {
-      // Find if we crossed any warning hour threshold
-      for (const threshold of warningHours) {
-        if (remainingHours <= threshold && remainingHours > (threshold - 1.0)) {
-          const alertKey = `${war.endTime}_${threshold}`;
+      // Check every hour boundary up to 48 hours
+      for (let h = 1; h <= 48; h++) {
+        if (remainingHours <= h && remainingHours > (h - 1.0)) {
+          const alertKey = `${war.endTime}_${h}`;
           if (!sentAlerts.has(alertKey)) {
             shouldAlert = true;
-            activeThreshold = threshold;
+            activeThreshold = h;
             sentAlerts.add(alertKey);
             break;
           }
@@ -101,7 +99,7 @@ export async function triggerWarAlerts(forced = false) {
 
     if (playersWithAttacks.length === 0) {
       // Send a celebratory message to the group if all attacks are done!
-      if (groupChatId) {
+      if (groupChatId && groupWarningHours.includes(activeThreshold)) {
         const text = `🎉 **كفو يا أبطال كلاش رويال!**\nلقد أكمل الجميع جميع هجمات الحرب (4/4) لهذا اليوم! صدارة إن شاء الله! ⚔️🛡️🔥👑`;
         await botInstance.telegram.sendMessage(groupChatId, text, { parse_mode: 'Markdown' });
       }
@@ -118,9 +116,12 @@ export async function triggerWarAlerts(forced = false) {
                           ? prefs[idStr].reminder_hours 
                           : 4;
         
-        // Skip if user disabled alerts (0) or if this threshold is not their chosen one
-        if (prefHours === 0) continue;
-        if (!forced && activeThreshold !== prefHours) continue;
+        let sendDm = false;
+        if (forced) sendDm = true;
+        else if (activeThreshold === prefHours && prefHours !== 0) sendDm = true;
+        else if (activeThreshold === 1) sendDm = true; // Mandatory 1-hour alert for all
+        
+        if (!sendDm) continue;
 
         try {
           const dmText = `⚠️ **تنبيه هام من الكلان!** ⚔️\n\nبطلنا **${player.telegramName}** (${player.name})، يتبقى لديك **${player.attacksRemaining}** هجمات (Decks) في حرب الكلان اليوم!\n⏰ ينتهي وقت الحرب اليومي خلال: **${relativeTime}**.\n\nالرجاء لعب هجماتك المتبقية سريعاً! 🛡️👑`;
@@ -133,7 +134,8 @@ export async function triggerWarAlerts(forced = false) {
     }
 
     // Send Group Alert mapping all players
-    if (groupChatId) {
+    const shouldSendGroupAlert = groupChatId && groupWarningHours.includes(activeThreshold);
+    if (shouldSendGroupAlert) {
       let groupText = `⚠️ **تذكير الحرب اليومي عاجل!** ⚔️\n`;
       groupText += `ينتهي اليوم الحربي خلال: **${relativeTime}** ⏱️\n\n`;
       groupText += `👑 **الرجاء من الأعضاء لعب هجماتهم المتبقية (Decks) سريعاً:**\n`;
