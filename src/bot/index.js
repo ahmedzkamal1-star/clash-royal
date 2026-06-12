@@ -84,10 +84,24 @@ export async function initBot() {
     }
 
     const name = ctx.from.first_name || 'بطل';
+    const telegramId = ctx.from.id;
+    const player = await getPlayerByTelegramId(telegramId);
+
     await ctx.reply(
       `أهلاً بك يا ${name} في بوت تنبيه حرب كلاش رويال! 👑⚔️\n\nهذا البوت يساعد الكلان في تذكير الأعضاء بلعب هجمات الحرب الأربعة يومياً.\n\nاستخدم الأزرار بالأسفل للتحكم:`,
       getMainMenu()
     );
+
+    if (!player) {
+      setTimeout(() => {
+        ctx.reply(
+          `⚠️ **ملاحظة هامة:** أنت لم تقم بربط حساب كلاش رويال الخاص بك بعد.\nاضغط على الزر أدناه للبدء في التسجيل وربط الحساب لتصلك تنبيهات الحرب! 👇`,
+          Markup.inlineKeyboard([
+            [Markup.button.callback('📝 ربط الحساب الآن', 'link_account')]
+          ])
+        );
+      }, 500);
+    }
   });
 
   // Help command
