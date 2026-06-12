@@ -154,6 +154,23 @@ export async function initBot() {
     );
   }
 
+  // Handle Settings Actions
+  bot.action('unlink_account', async (ctx) => {
+    const telegramId = ctx.from.id;
+    try {
+      await deletePlayerMapping(telegramId);
+      ctx.answerCbQuery('تم إلغاء ربط الحساب بنجاح ✅');
+      ctx.editMessageText('تم إزالة حسابك القديم بنجاح. يمكنك الآن ربط حساب جديد من خلال الإعدادات.');
+    } catch (e) {
+      ctx.answerCbQuery('حدث خطأ أثناء إزالة الحساب ❌');
+    }
+  });
+
+  bot.action('link_account', async (ctx) => {
+    ctx.answerCbQuery();
+    await startRegistration(ctx);
+  });
+
   // Handle text messages (Menu Buttons & Registration Flow)
   bot.on('text', async (ctx) => {
     const text = ctx.message.text.trim();
@@ -226,6 +243,10 @@ export async function initBot() {
 
       case '👤 حسابي':
         await handleMyWar(ctx);
+        break;
+
+      case '⚙️ الإعدادات':
+        await handleSettings(ctx);
         break;
 
       case '📝 ربط الحساب':
@@ -376,5 +397,32 @@ async function handleMyWar(ctx) {
     }
   } catch (error) {
     ctx.reply(`حدث خطأ أثناء فحص هجماتك: ${error.message}`);
+  }
+}
+
+async function handleSettings(ctx) {
+  const telegramId = ctx.from.id;
+  const player = await getPlayerByTelegramId(telegramId);
+  
+  if (player) {
+    return ctx.reply(
+      `⚙️ **الإعدادات الشخصية**\n\n` +
+      `👤 حسابك الحالي المربوط:\n` +
+      `الاسم: **${player.player_name}**\n` +
+      `التاغ: ${player.player_tag}\n\n` +
+      `لتغيير الحساب أو إزالة الربط، اضغط على الزر أدناه:`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('❌ إلغاء ربط الحساب', 'unlink_account')]
+      ])
+    );
+  } else {
+    return ctx.reply(
+      `⚙️ **الإعدادات الشخصية**\n\n` +
+      `أنت لم تقم بربط حساب كلاش رويال الخاص بك بعد.\n` +
+      `اضغط على الزر أدناه للبدء في التسجيل وربط الحساب.`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('📝 ربط الحساب الآن', 'link_account')]
+      ])
+    );
   }
 }
