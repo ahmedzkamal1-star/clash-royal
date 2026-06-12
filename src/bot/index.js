@@ -51,7 +51,12 @@ export function getRelativeTimeStr(endTimeStr) {
 }
 
 // Generate the standard keyboard
-function getMainMenu() {
+function getMainMenu(isRegistered = true) {
+  if (!isRegistered) {
+    return Markup.keyboard([
+      ['📝 ربط الحساب']
+    ]).resize();
+  }
   return Markup.keyboard([
     ['🛡️ معلومات الكلان', '🏆 أبطال الكلان'],
     ['⚔️ نقاط الحرب (اليوم)', '⚔️ نقاط الحرب (الأسبوع)'],
@@ -89,23 +94,14 @@ export async function initBot() {
 
     await ctx.reply(
       `أهلاً بك يا ${name} في بوت تنبيه حرب كلاش رويال! 👑⚔️\n\nهذا البوت يساعد الكلان في تذكير الأعضاء بلعب هجمات الحرب الأربعة يومياً.\n\nاستخدم الأزرار بالأسفل للتحكم:`,
-      getMainMenu()
+      getMainMenu(!!player)
     );
-
-    if (!player) {
-      setTimeout(() => {
-        ctx.reply(
-          `⚠️ **ملاحظة هامة:** أنت لم تقم بربط حساب كلاش رويال الخاص بك بعد.\nاضغط على الزر أدناه للبدء في التسجيل وربط الحساب لتصلك تنبيهات الحرب! 👇`,
-          Markup.inlineKeyboard([
-            [Markup.button.callback('📝 ربط الحساب الآن', 'link_account')]
-          ])
-        );
-      }, 500);
-    }
   });
 
   // Help command
-  bot.help((ctx) => {
+  bot.help(async (ctx) => {
+    const telegramId = ctx.from.id;
+    const player = await getPlayerByTelegramId(telegramId);
     ctx.reply(
       `أوكرام البوت المتوفرة:\n` +
       `📝 /register - لربط حساب اللعبة الخاص بك بالتاج\n` +
@@ -114,18 +110,19 @@ export async function initBot() {
       `🛡️ /clan - لعرض معلومات الكلان\n` +
       `❌ /cancel - لإلغاء التسجيل الجاري\n` +
       `🗑️ /unregister - لإلغاء ربط حسابك الحالي`,
-      getMainMenu()
+      getMainMenu(!!player)
     );
   });
 
   // Cancel Command
-  bot.command('cancel', (ctx) => {
+  bot.command('cancel', async (ctx) => {
     const telegramId = ctx.from.id;
+    const player = await getPlayerByTelegramId(telegramId);
     if (registrationSessions.has(telegramId)) {
       registrationSessions.delete(telegramId);
-      ctx.reply('تم إلغاء عملية التسجيل. ❌', getMainMenu());
+      ctx.reply('تم إلغاء عملية التسجيل. ❌', getMainMenu(!!player));
     } else {
-      ctx.reply('لا توجد عملية تسجيل نشطة لإلغائها.', getMainMenu());
+      ctx.reply('لا توجد عملية تسجيل نشطة لإلغائها.', getMainMenu(!!player));
     }
   });
 
@@ -134,10 +131,10 @@ export async function initBot() {
     const telegramId = ctx.from.id;
     const player = await getPlayerByTelegramId(telegramId);
     if (!player) {
-      return ctx.reply('حسابك غير مربوط بأي لاعب كلاش رويال حالياً.', getMainMenu());
+      return ctx.reply('حسابك غير مربوط بأي لاعب كلاش رويال حالياً.', getMainMenu(false));
     }
     await deletePlayerMapping(telegramId);
-    ctx.reply(`تم إلغاء ربط الحساب **${player.player_name}** بنجاح. 🗑️`, getMainMenu());
+    ctx.reply(`تم إلغاء ربط الحساب **${player.player_name}** بنجاح. 🗑️`, getMainMenu(false));
   });
 
   // Handler for /register
@@ -194,9 +191,10 @@ export async function initBot() {
 
     // Handle cancel button from keyboard
     if (text === '❌ إلغاء التسجيل') {
+      const player = await getPlayerByTelegramId(telegramId);
       if (registrationSessions.has(telegramId)) {
         registrationSessions.delete(telegramId);
-        return ctx.reply('تم إلغاء عملية التسجيل. ❌', getMainMenu());
+        return ctx.reply('تم إلغاء عملية التسجيل. ❌', getMainMenu(!!player));
       }
     }
 
@@ -273,7 +271,8 @@ export async function initBot() {
 
       default:
         if (ctx.chat.type === 'private') {
-          ctx.reply('اختر أحد الخيارات من القائمة بالأسفل، أو اكتب /help لمشاهدة جميع الأوامر.', getMainMenu());
+          const player = await getPlayerByTelegramId(telegramId);
+          ctx.reply('اختر أحد الخيارات من القائمة بالأسفل، أو اكتب /help لمشاهدة جميع الأوامر.', getMainMenu(!!player));
         }
         break;
     }
