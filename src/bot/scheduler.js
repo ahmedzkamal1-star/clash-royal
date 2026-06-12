@@ -25,11 +25,7 @@ export async function triggerWarAlerts(forced = false) {
       return { success: true, message: 'No active war to alert for.' };
     }
 
-    // Alerts are sent on both trainingDay and warDay in CR
-    if (war.state !== 'warDay' && war.state !== 'trainingDay') {
-      return { success: true, message: `War state is ${war.state}. Alerts only sent during warDay or trainingDay.` };
-    }
-
+    // Removed redundant state check because getUnifiedActiveWar already handles active war states.
     const endTime = new Date(war.endTime);
     const now = new Date();
     const diffMs = endTime - now;
