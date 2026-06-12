@@ -209,6 +209,7 @@ export async function getUnifiedActiveWar() {
       inWar: inWar,
       type: 'riverRace',
       state: race.state,
+      periodIndex: race.periodIndex,
       teamSize: membersList.length,
       startTime: now.toISOString(),
       endTime: endTimeStr,

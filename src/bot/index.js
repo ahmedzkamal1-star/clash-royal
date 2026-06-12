@@ -289,7 +289,14 @@ async function handleWarInfo(ctx) {
       return ctx.reply(`لا يمكن عرض الحرب حالياً: ${war.message || 'لا توجد حرب نشطة'}`);
     }
 
-    const stateStr = war.state === 'trainingDay' ? 'أيام تدريب' : 'يوم حرب';
+    let stateStr = '';
+    if (war.state === 'trainingDay') {
+      const dayNum = (war.periodIndex % 7) + 1;
+      stateStr = `أيام تدريب (اليوم ${dayNum})`;
+    } else {
+      const dayNum = (war.periodIndex % 7) - 2;
+      stateStr = `يوم حرب (اليوم ${dayNum})`;
+    }
     
     let text = `⚔️ حالة الحرب: **${stateStr}**\n\n`;
 
