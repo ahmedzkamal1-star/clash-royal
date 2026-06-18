@@ -62,7 +62,7 @@ function getMainMenu(isRegistered = true) {
   }
   return Markup.keyboard([
     ['🛡️ معلومات الكلان', '🏆 أبطال الكلان'],
-    ['⚔️ نقاط الحرب (اليوم)', '⚔️ نقاط الحرب (الأسبوع)'],
+    ['⚔️ نقاط الحرب'],
     ['👤 حسابي', '⚙️ الإعدادات']
   ]).resize();
 }
@@ -315,13 +315,13 @@ export async function initBot() {
         await handleLeaderboard(ctx);
         break;
 
-      case '⚔️ نقاط الحرب (اليوم)':
+      case '⚔️ نقاط الحرب':
+      case '⚔️ نقاط الحرب (اليوم)': // For backward compatibility with old keyboards
         await handleWarInfo(ctx, 'today');
         break;
 
-      case '⚔️ نقاط الحرب (الأسبوع)':
-      case '⚔️ سباق الحرب (River Race)':
       case '⚔️ حالة الحرب':
+      case '⚔️ نقاط الحرب (الأسبوع)':
         await handleWarInfo(ctx, 'total');
         break;
 
