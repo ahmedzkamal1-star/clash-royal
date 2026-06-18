@@ -131,8 +131,8 @@ export async function getUnifiedActiveWar() {
     // 1. Fetch current river race
     const race = await getCurrentRiverRace(cleanClanTag);
     
-    // active if state is not notInWar (states include 'warDay', 'trainingDay', 'full', 'war', 'training')
-    const inWar = race.state && race.state !== 'notInWar';
+    // active if state is not notInWar and not training (we only alert on war days)
+    const inWar = race.state && race.state !== 'notInWar' && race.state !== 'training';
     
     // 2. Fetch clan profile to get the complete member list (includes players with 0 decks used today)
     const clanDetails = await getClanInfo(cleanClanTag);
