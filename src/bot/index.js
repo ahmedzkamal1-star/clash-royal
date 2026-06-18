@@ -326,7 +326,7 @@ export async function initBot() {
         break;
 
       case '👤 حسابي':
-        await handleMyWar(ctx);
+        await handleProfile(ctx);
         break;
 
       case '⚙️ الإعدادات':
@@ -454,7 +454,7 @@ async function handleWarInfo(ctx, mode = 'total') {
   }
 }
 
-async function handleMyWar(ctx) {
+async function handleProfile(ctx) {
   const telegramId = ctx.from.id;
   const player = await getPlayerByTelegramId(telegramId);
   
@@ -462,26 +462,34 @@ async function handleMyWar(ctx) {
     return ctx.reply('حساب التلجرام الخاص بك غير مربوط بأي لاعب كلاش رويال حالياً. يرجى الضغط على **📝 ربط الحساب** للبدء.');
   }
 
-  ctx.reply(`جاري البحث عن هجماتك المتبقية للاعب **${player.player_name}**... 🔍`);
+  ctx.reply(`جاري إحضار بياناتك للاعب **${player.player_name}**... 🔍`);
   
   try {
-    const war = await getUnifiedActiveWar();
+    const { getPlayerInfo } = await import('../coc/api.js');
+    const pInfo = await getPlayerInfo(player.player_tag);
     
-    if (!war.inWar) {
-      return ctx.reply('💤 الكلان ليس في حرب نشطة حالياً.');
-    }
+    let roleAr = 'عضو';
+    if (pInfo.role === 'leader') roleAr = 'قائد';
+    else if (pInfo.role === 'coLeader') roleAr = 'قائد مساعد';
+    else if (pInfo.role === 'elder') roleAr = 'كبير';
 
-    const member = war.clan.members.find(m => m.tag === player.player_tag);
-    const decksUsedToday = member ? member.decksUsedToday : 0;
-    const remaining = 4 - decksUsedToday;
+    const favCard = pInfo.currentFavouriteCard ? pInfo.currentFavouriteCard.name : 'غير معروف';
 
-    if (remaining === 0) {
-      ctx.reply(`✅ كفو يا **${player.player_name}**! لقد لعبت جميع هجماتك اليومية الأربعة (4/4). جزاك الله خيراً! 🔥👑`);
-    } else {
-      ctx.reply(`⚠️ انتبه يا **${player.player_name}**! لديك **${remaining}** هجمات (Decks) متبقية اليوم.\nينتهي اليوم الحربي خلال: **${getRelativeTimeStr(war.endTime)}**.\nالرجاء الهجوم ونصرة الكلان! ⚔️🛡️`);
-    }
+    const text = `📊 **الملف الشخصي** 📊\n\n` +
+      `👤 **الاسم:** ${pInfo.name}\n` +
+      `🏷️ **التاغ:** ${pInfo.tag}\n` +
+      `🛡️ **المنصب:** ${roleAr}\n\n` +
+      `🏆 **الكؤوس الحالية:** ${pInfo.trophies}\n` +
+      `🌟 **أعلى كؤوس:** ${pInfo.bestTrophies}\n` +
+      `⚔️ **الانتصارات:** ${pInfo.wins}\n` +
+      `🎮 **الهزائم:** ${pInfo.losses}\n` +
+      `🏟️ **الساحة:** ${pInfo.arena ? pInfo.arena.name : 'غير محدد'}\n\n` +
+      `🎁 **التبرعات (أسبوعياً):** ${pInfo.donations}\n` +
+      `🃏 **البطاقة المفضلة:** ${favCard}`;
+
+    ctx.reply(text);
   } catch (error) {
-    ctx.reply(`حدث خطأ أثناء فحص هجماتك: ${error.message}`);
+    ctx.reply(`حدث خطأ أثناء فحص بياناتك: ${error.message}`);
   }
 }
 
