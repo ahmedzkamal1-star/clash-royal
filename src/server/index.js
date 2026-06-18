@@ -7,7 +7,10 @@ import {
   updateSetting, 
   getAllPlayers, 
   deletePlayerMapping,
-  getSetting
+  getSetting,
+  getAllStrikes,
+  resetStrikeForPlayer,
+  resetAllStrikes
 } from '../db/index.js';
 import { getClanInfo, getUnifiedActiveWar } from '../coc/api.js';
 import { triggerWarAlerts, triggerMissingAlerts, triggerPlayerAlert } from '../bot/scheduler.js';
