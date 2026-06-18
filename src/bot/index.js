@@ -415,19 +415,15 @@ async function handleWarInfo(ctx, mode = 'total') {
 
     const rankPrefixes = ['🥇 الأول', '🥈 الثاني', '🥉 الثالث', '🏅 الرابع', '🎖️ الخامس'];
     if (war.clans && war.clans.length > 0) {
-      // Sort clans based on requested mode
+      // Sort clans based on periodPoints
       let sortedClans = [...war.clans];
-      if (mode === 'today') {
-        sortedClans.sort((a, b) => b.fame - a.fame);
-      } else {
-        sortedClans.sort((a, b) => b.periodPoints - a.periodPoints);
-      }
+      sortedClans.sort((a, b) => b.periodPoints - a.periodPoints);
 
       sortedClans.forEach((c, i) => {
         const isUs = c.tag === war.clan.tag ? ' (نحن 🛡️)' : '';
         const prefix = rankPrefixes[i] || `${i + 1}-`;
-        const score = mode === 'today' ? c.fame : c.periodPoints;
-        text += `${prefix} كلان **${c.name}**${isUs}\n└ ${mode === 'today' ? 'شهرة اليوم' : 'النقاط الإجمالية'}: ${score} 🏆\n`;
+        const score = c.periodPoints;
+        text += `${prefix} كلان **${c.name}**${isUs}\n└ النقاط: ${score} 🏆\n`;
       });
     }
 
